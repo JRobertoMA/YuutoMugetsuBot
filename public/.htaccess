@@ -1,0 +1,9 @@
+# Document root (IONOS: el subdominio apunta aquí). Solo contiene webhook.php y api/.
+# Las cabeceras de seguridad las pone includes/bootstrap.php.
+
+Options -Indexes
+DirectoryIndex index.php
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>

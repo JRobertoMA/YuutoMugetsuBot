@@ -1,0 +1,14 @@
+# Secretos y entorno: nunca en git
+.env
+
+# Datos de ejecución (bloqueos, offset del long-polling). Solo se versiona su .htaccess.
+data/*
+!data/.htaccess
+
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
