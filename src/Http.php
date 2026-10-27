@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App;
 
 /**
- * POST JSON con curl (sin Composer: el bot no necesita Guzzle). Lo usan Telegram y el reenvío a los proyectos.
+ * POST JSON y GET con curl (sin Composer: el bot no necesita Guzzle). Lo usan Telegram, el reenvío a los proyectos
+ * y cli/selftest.php.
  * Nunca sigue redirecciones: una respuesta 3xx se trata como error.
  */
 final class Http
@@ -25,6 +26,19 @@ final class Http
             CURLOPT_POSTFIELDS => $json,
             CURLOPT_HTTPHEADER => $lines,
         ], $timeout);
+    }
+
+    /**
+     * @param array<string,string> $headers
+     * @return array{status:int, body:string, error:?string}
+     */
+    public static function get(string $url, array $headers = [], int $timeout = 15): array
+    {
+        $lines = ['Accept: application/json'];
+        foreach ($headers as $k => $v) {
+            $lines[] = $k . ': ' . $v;
+        }
+        return self::request($url, [CURLOPT_HTTPGET => true, CURLOPT_HTTPHEADER => $lines], $timeout);
     }
 
     /** @return array{status:int, body:string, error:?string} */

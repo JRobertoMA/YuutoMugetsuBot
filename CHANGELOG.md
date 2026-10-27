@@ -2,6 +2,17 @@
 
 Versiones publicadas (tags `vX.Y.Z`). En PROD se despliega siempre un tag.
 
+## 0.1.1 — 2026-10-26
+
+- **`cli/selftest.php <proyecto>`:** prueba en el servidor real que las cabeceras llegan a PHP. Usa la URL pública
+  (`APP_URL`). Comprueba:
+  - las firmas `X-Bot-*`: la buena, una alterada y una con la hora vieja;
+  - el secreto del webhook: el bueno y uno incorrecto;
+  - el `ping` firmado al proyecto.
+
+  No envía nada a Telegram, no imprime la clave ni el secreto, y borra lo que anota.
+- **Contrato:** nuevo evento `ping`. El proyecto responde `{"pong": true}`.
+
 ## 0.1.0 — 2026-10-26
 
 - **Webhook:**
