@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App;
 
 /**
- * POST JSON y GET con curl (sin Composer: el bot no necesita Guzzle). Lo usan Telegram, el reenvío a los proyectos
- * y cli/selftest.php.
+ * POST JSON, POST multipart y GET con curl (sin Composer: el bot no necesita Guzzle). Lo usan Telegram, el reenvío a
+ * los proyectos y cli/selftest.php.
  * Nunca sigue redirecciones: una respuesta 3xx se trata como error.
  */
 final class Http
@@ -25,6 +25,21 @@ final class Http
             CURLOPT_POST       => true,
             CURLOPT_POSTFIELDS => $json,
             CURLOPT_HTTPHEADER => $lines,
+        ], $timeout);
+    }
+
+    /**
+     * POST multipart/form-data (envío de archivos). Los valores pueden ser texto o \CURLStringFile (archivo en memoria).
+     *
+     * @param array<string,string|\CURLStringFile> $fields
+     * @return array{status:int, body:string, error:?string}
+     */
+    public static function postMultipart(string $url, array $fields, int $timeout = 30): array
+    {
+        return self::request($url, [
+            CURLOPT_POST       => true,
+            CURLOPT_POSTFIELDS => $fields,
+            CURLOPT_HTTPHEADER => ['Accept: application/json'],
         ], $timeout);
     }
 

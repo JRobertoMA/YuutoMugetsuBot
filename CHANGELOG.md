@@ -2,6 +2,18 @@
 
 Versiones publicadas (tags `vX.Y.Z`). En PROD se despliega siempre un tag.
 
+## 0.2.0 — 2026-11-02
+
+- **`api/send_document.php`:** un proyecto envía un archivo (`sendDocument`), firmado como `api/send.php`.
+  - Entrada: `filename` (se sanea a `[A-Za-z0-9._-]`, ≤ 64), `content_base64` (≤ 1 MB decodificado), `caption`
+    (HTML, ≤ 1024), `buttons`, `silent`, `ref`, `chat`.
+  - El archivo viaja en el payload como `_document`. `App\Telegram` lo envía en multipart desde memoria
+    (`CURLStringFile`), sin escribirlo a disco.
+  - Si Telegram limita o no responde, va a la bandeja de salida **con el archivo** y `cli/worker.php` lo reintenta
+    igual que un mensaje.
+- **`App\Http::postMultipart()`.**
+- Primer uso: `g9-diagnosticos` (diagnósticos de G9 Control con el JSON adjunto).
+
 ## 0.1.1 — 2026-10-26
 
 - **`cli/selftest.php <proyecto>`:** prueba en el servidor real que las cabeceras llegan a PHP. Usa la URL pública

@@ -18,11 +18,17 @@ use InvalidArgumentException;
  *
  * Un proyecto solo puede poner en callback_data sus propios prefijos (rutas «callback» suyas): así no puede crear
  * botones que acaben en otro proyecto.
+ *
+ * Documentos (api/send_document): filename, content_base64 (≤ 1 MB decodificado), caption (≤ 1024), parse_mode,
+ * buttons y silent. El archivo viaja en el payload como «_document» (Telegram::call lo envía en multipart).
  */
 final class Message
 {
     private const MAX_BUTTONS = 100;
     private const MAX_PER_ROW = 8;
+
+    /** Tamaño máximo de un documento, ya decodificado. Telegram admite 50 MB; aquí solo pasan diagnósticos y similares. */
+    public const MAX_DOCUMENT_BYTES = 1048576;
 
     /** Parámetros para sendMessage. */
     public static function forSend(array $msg, string $project, int $chatId): array
@@ -45,6 +51,46 @@ final class Message
             return ['editMessageReplyMarkup', $base + ['reply_markup' => self::keyboard((array) $msg['buttons'], $project)]];
         }
         return ['editMessageText', $base + self::content($msg, $project, true)];
+    }
+
+    /** Parámetros para sendDocument, con el archivo en «_document» ({name, base64}). */
+    public static function forDocument(array $msg, string $project, int $chatId): array
+    {
+        $name = preg_replace('/[^A-Za-z0-9._-]/', '_', basename((string) ($msg['filename'] ?? '')));
+        $name = ltrim(mb_substr((string) $name, 0, 64), '.');
+        if ($name === '') {
+            throw new InvalidArgumentException('Falta «filename».');
+        }
+        $b64 = (string) ($msg['content_base64'] ?? '');
+        $bytes = base64_decode($b64, true);
+        if ($bytes === false || $bytes === '') {
+            throw new InvalidArgumentException('«content_base64» falta o no es base64 válido.');
+        }
+        if (strlen($bytes) > self::MAX_DOCUMENT_BYTES) {
+            throw new InvalidArgumentException('El documento supera ' . intdiv(self::MAX_DOCUMENT_BYTES, 1024) . ' KB.');
+        }
+        $p = ['chat_id' => $chatId, '_document' => ['name' => $name, 'base64' => base64_encode($bytes)]];
+        $caption = (string) ($msg['caption'] ?? '');
+        if (mb_strlen($caption) > 1024) {
+            throw new InvalidArgumentException('«caption» supera los 1024 caracteres de Telegram.');
+        }
+        if ($caption !== '') {
+            $p['caption'] = $caption;
+            $mode = (string) ($msg['parse_mode'] ?? 'HTML');
+            if (!in_array($mode, ['HTML', 'MarkdownV2', 'none'], true)) {
+                throw new InvalidArgumentException('parse_mode debe ser HTML, MarkdownV2 o none.');
+            }
+            if ($mode !== 'none') {
+                $p['parse_mode'] = $mode;
+            }
+        }
+        if (array_key_exists('buttons', $msg)) {
+            $p['reply_markup'] = self::keyboard((array) $msg['buttons'], $project);
+        }
+        if (!empty($msg['silent'])) {
+            $p['disable_notification'] = true;
+        }
+        return $p;
     }
 
     /** Texto, formato, vista previa y teclado. */
